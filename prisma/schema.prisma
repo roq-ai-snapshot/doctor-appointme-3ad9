@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions      = [pgcrypto]
+}
+
+model appointment {
+  id                     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  healthcare_provider_id String?              @db.Uuid
+  medical_staff_id       String?              @db.Uuid
+  appointment_info       String?              @db.VarChar(255)
+  created_at             DateTime             @default(now()) @db.Timestamp(6)
+  updated_at             DateTime             @default(now()) @db.Timestamp(6)
+  healthcare_provider    healthcare_provider? @relation(fields: [healthcare_provider_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  medical_staff          medical_staff?       @relation(fields: [medical_staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model healthcare_provider {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String?       @db.Uuid
+  profile_info String?       @db.VarChar(255)
+  created_at   DateTime      @default(now()) @db.Timestamp(6)
+  updated_at   DateTime      @default(now()) @db.Timestamp(6)
+  appointment  appointment[]
+  user         user?         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model insurance_provider {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String?   @db.Uuid
+  insurance_info String?   @db.VarChar(255)
+  created_at     DateTime  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime  @default(now()) @db.Timestamp(6)
+  user           user?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient        patient[]
+}
+
+model medical_staff {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String?       @db.Uuid
+  profile_info String?       @db.VarChar(255)
+  created_at   DateTime      @default(now()) @db.Timestamp(6)
+  updated_at   DateTime      @default(now()) @db.Timestamp(6)
+  appointment  appointment[]
+  user         user?         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient      patient[]
+}
+
+model organization {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  description String?  @db.VarChar(255)
+  name        String   @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  user_id     String   @db.Uuid
+  tenant_id   String   @db.VarChar(255)
+  user        user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model patient {
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  medical_staff_id      String?             @db.Uuid
+  insurance_provider_id String?             @db.Uuid
+  patient_info          String?             @db.VarChar(255)
+  created_at            DateTime            @default(now()) @db.Timestamp(6)
+  updated_at            DateTime            @default(now()) @db.Timestamp(6)
+  insurance_provider    insurance_provider? @relation(fields: [insurance_provider_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  medical_staff         medical_staff?      @relation(fields: [medical_staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email               String                @unique @db.VarChar(255)
+  firstName           String?               @db.VarChar(255)
+  lastName            String?               @db.VarChar(255)
+  roq_user_id         String                @db.VarChar(255)
+  tenant_id           String                @db.VarChar(255)
+  created_at          DateTime              @default(now()) @db.Timestamp(6)
+  updated_at          DateTime              @default(now()) @db.Timestamp(6)
+  healthcare_provider healthcare_provider[]
+  insurance_provider  insurance_provider[]
+  medical_staff       medical_staff[]
+  organization        organization[]
+}
